@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 
@@ -78,4 +79,18 @@ func NewAuthorizerLambdaHandler(config AuthorizerLambdaConfig) func(ctx context.
 			},
 		}, nil
 	}
+}
+
+func ExtractPrincipal(request events.APIGatewayProxyRequest) (goauth.Principal, error) {
+	encodedPrincipal := request.RequestContext.Authorizer["principal"]
+	principal, err := base64.StdEncoding.DecodeString(encodedPrincipal.(string))
+	if err != nil {
+		return goauth.Principal{}, errors.WithStack(err)
+	}
+	ret := goauth.Principal{}
+	err = json.Unmarshal(principal, &ret)
+	if err != nil {
+		return goauth.Principal{}, errors.WithStack(err)
+	}
+	return ret, nil
 }
