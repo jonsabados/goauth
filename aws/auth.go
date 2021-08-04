@@ -20,8 +20,9 @@ type PolicyBuilder interface {
 }
 
 type AuthorizerCallback interface {
-	AuthFailed()
-	AuthPass(p goauth.Principal)
+	AuthFailed() error
+	AuthPass(p goauth.Principal) error
+	ErrorEncountered(err error)
 }
 
 type AuthorizerLambdaConfig struct {
@@ -40,10 +41,18 @@ func NewAuthorizerLambdaHandler(config AuthorizerLambdaConfig) func(ctx context.
 			var err error
 			principal, err = config.Authorizer.Authenticate(ctx, strings.Replace(request.AuthorizationToken, "Bearer ", "", 1))
 			if err != nil {
-				callbacks.AuthFailed()
+				err := callbacks.AuthFailed()
+				if err != nil {
+					callbacks.ErrorEncountered(err)
+					return events.APIGatewayCustomAuthorizerResponse{}, err
+				}
 				return events.APIGatewayCustomAuthorizerResponse{}, errors.New("Unauthorized")
 			} else {
-				callbacks.AuthPass(principal)
+				err := callbacks.AuthPass(principal)
+				if err != nil {
+					callbacks.ErrorEncountered(err)
+					return events.APIGatewayCustomAuthorizerResponse{}, err
+				}
 			}
 		} else if request.AuthorizationToken == "anonymous" && config.AllowAnonymous {
 			principal = goauth.Anonymous
