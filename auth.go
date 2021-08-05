@@ -9,7 +9,7 @@ type Principal struct {
 	Roles  []string `json:"roles"`
 }
 
-func (p Principal) isAnonymous() bool {
+func (p Principal) IsAnonymous() bool {
 	return p.UserID == AnonymousUserID
 }
 
