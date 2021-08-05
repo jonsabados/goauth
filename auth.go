@@ -1,5 +1,7 @@
 package goauth
 
+const AnonymousUserID = "anonymous"
+
 type Principal struct {
 	UserID string   `json:"userId"`
 	Email  string   `json:"email"`
@@ -7,7 +9,11 @@ type Principal struct {
 	Roles  []string `json:"roles"`
 }
 
+func (p Principal) isAnonymous() bool {
+	return p.UserID == AnonymousUserID
+}
+
 var Anonymous = Principal{
-	UserID: "anonymous",
+	UserID: AnonymousUserID,
 	Name:   "Anonymous User",
 }
